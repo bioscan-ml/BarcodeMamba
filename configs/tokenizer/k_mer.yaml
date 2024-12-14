@@ -1,0 +1,7 @@
+k_mer: 4
+padding: True
+padding_side: left
+name: k_mer
+stride: ${.k_mer}
+max_len: ${dataset.max_len}
+vocab_size: ${eval:4 ** ${.k_mer} + 3}

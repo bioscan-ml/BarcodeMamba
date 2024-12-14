@@ -1,0 +1,39 @@
+defaults:
+  - _self_
+
+hydra:
+  run:
+    dir: baselines_output/${checkpoint}-finetune
+
+test: False
+ckpt: null
+classification_dim: null
+model_name: null
+checkpoint: null
+n_classes: 1653
+optimizer:
+  lr: 0.0006 # 6e-4 for hyena, 8e-3 for caduceus
+  weight_decay: 0.1
+  betas:
+  - 0.9
+  - 0.999
+scheduler:
+  t_in_epochs: false
+  t_initial: 295950
+  warmup_lr_init: 1.0e-06
+  warmup_t: 2959.5
+  lr_min: 0.00011999999999999999
+dataset:
+  input_path: ./data/
+  max_len: 660
+  classify_level: species
+  num_workers: 0
+  batch_size: 256
+trainer:
+  accelerator: gpu
+  devices: -1
+  num_nodes: 1
+  max_epochs: 50
+  gradient_clip_val: 1.0
+  fast_dev_run: false
+  strategy: ddp

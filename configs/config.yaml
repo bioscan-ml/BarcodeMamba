@@ -1,0 +1,82 @@
+defaults:
+  - _self_
+  - /tokenizer: char
+  - /dataset: CanadianInvertebrates1.5M-pretrain
+
+hydra:
+  run:
+    dir: outputs/${train.run_name}
+
+model:
+  d_model: 384
+  n_layer: 2
+  d_inner: ${eval:4 * ${.d_model}}
+  vocab_size: ${tokenizer.vocab_size}
+  resid_dropout: 0.0
+  embed_dropout: 0.1
+  residual_in_fp32: True  
+  pad_vocab_size_multiple: 8
+  mamba_ver: mamba2
+  layer:
+    d_model: ${model.d_model}
+    d_state: 64
+    d_conv: 4
+    expand: 2
+    headdim: 48 # 48 if d_model == 384, 64 if using other d_model
+  n_classes: null # null, 1653 for species level
+
+dataset:
+  __train_len: ${div_up:1_000_000_000, ${.max_len}}
+  __l_max: ${.max_len}
+  randomize_offset: true
+
+tokenizer:
+  use_unk_token: true
+
+trainer:
+  accelerator: gpu
+  devices: -1
+  num_nodes: 1
+  max_epochs: 50
+  gradient_clip_val: 1.0
+  fast_dev_run: false
+  strategy: ddp
+
+train:
+  logger: wandb
+  run_name: ${dataset.phase}-dim${model.d_model}-layer${model.n_layer}-${tokenizer.name}
+  gpu_mem: ${eval:"round(float(__import__('subprocess').check_output('nvidia-smi -i 0 --query-gpu=memory.total --format=csv,noheader,nounits', shell=True).strip().decode()) / 1000)"}
+  seed: 2222
+  global_batch_size: 256
+  ckpt: null
+  ema: 0.0
+  test: true
+  interval: step
+  monitor: val/loss_epoch
+  mode: min
+  validate_at_start: false
+  pretrained_model_strict_load: false
+  pretrained_model_path: null
+
+scheduler:
+  t_in_epochs: False
+  t_initial: ${eval:${div_up:${dataset.__train_len}, ${train.global_batch_size}} * ${trainer.max_epochs}}
+  warmup_lr_init: 1e-6
+  warmup_t: ${eval:${div_up:${dataset.__train_len}, ${train.global_batch_size}} * ${trainer.max_epochs} * 0.01}
+  lr_min: ${eval:0.1 * ${optimizer.lr}}
+
+optimizer:
+  lr: 8e-4
+  weight_decay: 0.1
+  betas: [0.9, 0.999]
+
+model_checkpoint:
+  monitor: ${train.monitor}
+  mode: ${train.mode}
+  save_top_k: 1
+  save_last: True
+  dirpath: checkpoints/
+  filename: barcode-mamba-${dataset.phase}-{epoch:02d}
+  save_on_train_epoch_end: True
+  auto_insert_metric_name: True
+  verbose: True

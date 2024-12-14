@@ -1,0 +1,12 @@
+input_path: ./data/
+max_len: 660
+use_padding: true
+add_eos: false
+rc_aug: true
+phase: pretrain
+classify_level: null
+num_workers: 0
+batch_size: 16
+pretrain_method: ntp # mlm, ntp
+mask_ratio: 0.5
+randomize_offset: true

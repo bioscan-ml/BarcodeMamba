@@ -1,0 +1,11 @@
+input_path: ./data/
+max_len: 660
+use_padding: true
+add_eos: false
+rc_aug: false
+phase: finetune
+classify_level: species
+num_workers: 0
+batch_size: 16
+randomize_offset: false
+pretrain_method: ntp # mlm, ntp

@@ -1,0 +1,6 @@
+name: char
+characters: ["A", "C", "G", "T", "N"]
+model_max_length: ${eval:${dataset.max_len} + 2}
+add_special_tokens: False
+padding_side: left
+vocab_size: 8
